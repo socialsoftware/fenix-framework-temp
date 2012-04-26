@@ -1,26 +1,20 @@
 package dml.maven;
 
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+import jvstm.ProcessAtomicAnnotations;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
-
 import org.codehaus.plexus.util.DirectoryScanner;
-
-import java.io.File;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
-
-import java.util.List;
-import java.util.ArrayList;
-
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.MalformedURLException;
-
-import jvstm.ProcessAtomicAnnotations;
 
 /**
  * Goal which injects the constructors into the bytecode of the DML compiled classes
@@ -93,17 +87,20 @@ public class PostCompileMojo extends AbstractMojo {
     }
 
     List<String> dmlFiles = new ArrayList<String>();
-    
+
     DirectoryScanner scanner = new DirectoryScanner();
     scanner.setBasedir(this.dmlDirectoryFile);
-        
+
     String[] includes = {"**\\*.dml"};
     scanner.setIncludes(includes);
     scanner.scan();
 
+    List<String> dmlFileList =  DmlMojoUtils.readDmlFilePathsFromArtifact(mavenProject.getArtifacts());
+    dmlFiles.addAll(dmlFileList);
+
     String[] includedFiles = scanner.getIncludedFiles();
     for (String includedFile : includedFiles) {
-      String filePath = this.dmlDirectoryFile.getAbsolutePath() + "/" + includedFile;       
+      String filePath = this.dmlDirectoryFile.getAbsolutePath() + "/" + includedFile;
       if(this.verbose) {
         getLog().info("Using: "+includedFile+"\nClass Full Name: "+this.classFullName+"\nDomain Model Class Name: "+this.domainModelClassName+"\nClasses Directory: "+this.classesDirectory);
       }
@@ -122,10 +119,10 @@ public class PostCompileMojo extends AbstractMojo {
 		try {
       postProcessDomainClassesClass = loader.loadClass("pt.ist.fenixframework.pstm.PostProcessDomainClasses");
       transactionClass = loader.loadClass("pt.ist.fenixframework.pstm.Transaction");
-			
+
 			processDomainClassesConstructor = postProcessDomainClassesClass.getConstructor(argsConstructor);
 			postProcessor = processDomainClassesConstructor.newInstance(args);
-			
+
 			Object[] nullArgs = new Object[] {};
 			Method m = postProcessDomainClassesClass.getMethod("start", new Class[]{});
       m.invoke(postProcessor, nullArgs);

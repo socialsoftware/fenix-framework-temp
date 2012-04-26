@@ -101,4 +101,13 @@ public class CompilerArgs {
     public Class<? extends CodeGenerator> getCodeGenerator() {
 	return generatorClass;
     }
+
+    public File getDestDirectory() {
+        return destDirectory;
+    }
+
+    public String getPackageName() {
+        return packageName;
+    }
+    
 }

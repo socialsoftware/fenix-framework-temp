@@ -18,21 +18,21 @@ import org.objectweb.asm.Type;
 public class PostProcessDomainClasses extends AbstractDomainPostProcessor {
     private static final String OID_INNER_CLASS_INTERNAL_NAME = Type.getInternalName(DomainObjectAllocator.OID.class);
 
-    private static final String CONSTRUCTOR_DESC = 
-        Type.getMethodDescriptor(Type.VOID_TYPE, 
+    private static final String CONSTRUCTOR_DESC =
+        Type.getMethodDescriptor(Type.VOID_TYPE,
                                  new Type[] { Type.getType(DomainObjectAllocator.OID.class) });
 
     private PostProcessDomainClasses() {
         super();
     }
-    
+
     public PostProcessDomainClasses(List<String> dmlFiles, String classFullName, String domainModelClassName) {
         this(dmlFiles, classFullName, domainModelClassName, Thread.currentThread().getContextClassLoader());
     }
 
-    public PostProcessDomainClasses(List<String> dmlFiles, 
-                                    String classFullName, 
-                                    String domainModelClassName, 
+    public PostProcessDomainClasses(List<String> dmlFiles,
+                                    String classFullName,
+                                    String domainModelClassName,
                                     ClassLoader parentClassLoader) {
         super(parentClassLoader);
         this.dmlFiles.addAll(dmlFiles);
@@ -62,7 +62,7 @@ public class PostProcessDomainClasses extends AbstractDomainPostProcessor {
 	    fos.write(classBytecode);
 	    fos.close();
 	} catch (Exception e) {
-	    throw new Error("Couldn't rewrite class file: " + e);
+	    System.err.println("WARNING: Couldn't rewrite class file: "+ classURL.toExternalForm());
 	}
     }
 

@@ -70,7 +70,7 @@ public class CodeGenerator {
     protected String getEntityFullName(DomainEntity domEntity) {
         if (domEntity == null) {
             return null;
-        } else {        
+        } else {
             return domEntity.getFullName(getPackageName());
         }
     }
@@ -118,7 +118,7 @@ public class CodeGenerator {
 
     protected void generateOneClass(final DomainClass domClass) {
         final String packageName = domClass.getPackageName();
-        
+
         writeToFile(new File(getBaseDirectoryFor(packageName), domClass.getBaseName() + ".java"),
                     new WriteProcedure() {
                         public void doIt(PrintWriter out) {
@@ -126,7 +126,12 @@ public class CodeGenerator {
                             generateBaseClass(domClass, out);
                         }
                     });
-                
+
+        File directory = getDirectoryFor(packageName);
+        if(directory == null) {
+            System.out.println("Skipping generation of non-base class: No directory was provided for package "+packageName);
+            return;
+        }
         File leafClassFile = new File(getDirectoryFor(packageName), domClass.getName() + ".java");
         if (! leafClassFile.exists()) {
             writeToFile(leafClassFile,
@@ -206,7 +211,7 @@ public class CodeGenerator {
         	printWords(out, ifsn.toString());
             }
         }
-        
+
         newBlock(out);
         generateBaseClassBody(domClass, out);
         closeBlock(out);
@@ -231,10 +236,10 @@ public class CodeGenerator {
         startMethodBody(out);
         generateBaseClassConstructorsBody(domClass, out);
         endMethodBody(out);
-        
+
         // slots getters/setters
         generateSlotsAccessors(domClass.getSlots(), out);
-        
+
         // roles methods
         generateRoleSlotsMethods(domClass.getRoleSlots(), out);
 
@@ -286,7 +291,7 @@ public class CodeGenerator {
                 generateStaticRoleSlots(role, out);
             }
         }
-        
+
         roleSlotsIter = domClass.getRoleSlots();
         while (roleSlotsIter.hasNext()) {
             Role role = (Role) roleSlotsIter.next();
@@ -309,7 +314,7 @@ public class CodeGenerator {
         print(out, ")");
         newBlock(out);
         generateRoleClassGetter(role, otherRole, out);
-        
+
         // the getInverseRole method
         String inverseRoleType = makeGenericType("dml.runtime.Role",
                                                  getTypeFullName(role.getType()),
@@ -350,12 +355,12 @@ public class CodeGenerator {
 
     protected String getRoleHandlerName(Role role, boolean otherClass) {
         StringBuilder buf = new StringBuilder();
-        
+
         if (otherClass) {
             buf.append(getTypeFullName(role.getOtherRole().getType()));
             buf.append(".");
         }
-        
+
         buf.append("role$$");
         buf.append(role.getName());
 
@@ -371,8 +376,8 @@ public class CodeGenerator {
 
         Role otherRole = role.getOtherRole();
 
-        String genericType = 
-            "<" 
+        String genericType =
+            "<"
             + getTypeFullName(otherRole.getType())
             + ","
             + getTypeFullName(role.getType())
@@ -424,7 +429,7 @@ public class CodeGenerator {
     protected String getRoleBaseType(Role role) {
         return ((role.getName() == null)
                 ? "dml.runtime.RoleEmpty"
-                : ((role.getMultiplicityUpper() == 1) 
+                : ((role.getMultiplicityUpper() == 1)
                    ? getRoleOneBaseType()
                    : getRoleManyBaseType()));
     }
@@ -481,7 +486,7 @@ public class CodeGenerator {
     protected String getBoxBaseType() {
         return "jvstm.VBox";
     }
-    
+
     protected String getBoxType(String elemType) {
         return makeGenericType(getBoxBaseType(), elemType);
     }
@@ -529,7 +534,7 @@ public class CodeGenerator {
     }
 
     protected String getRelationSlotNameFor(Role role) {
-        // when the two roles of a relation are played by the same class, 
+        // when the two roles of a relation are played by the same class,
         // we need to give different names to the relation slots because both
         // will be in the same class
 
@@ -556,7 +561,7 @@ public class CodeGenerator {
                 generateInitRoleSlot(role, out);
             }
         }
-        
+
         endMethodBody(out);
 
         // add instance initializer block that calls the initInstance method
@@ -647,7 +652,7 @@ public class CodeGenerator {
 
         startMethodBody(out);
         generateSetterBody(setterName, slotName, typeName, out);
-        endMethodBody(out);            
+        endMethodBody(out);
     }
 
     protected void generateRoleGetter(String slotName, String typeName, PrintWriter out) {
@@ -700,8 +705,8 @@ public class CodeGenerator {
         startMethodBody(out);
         generateRelationAddMethodCall(role, slotName, null, out);
         endMethodBody(out);
-        
-        
+
+
         // hasXpto
         newline(out);
         printMethod(out, methodModifiers, "boolean", "has" + capitalizedSlotName);
@@ -711,7 +716,7 @@ public class CodeGenerator {
         print(out, "() != null);");
         endMethodBody(out);
 
-                
+
         // removeXpto
         newline(out);
         printMethod(out, methodModifiers, "void", "remove" + capitalizedSlotName);
@@ -775,15 +780,15 @@ public class CodeGenerator {
 //         }
         // getXptoCount
         generateRoleSlotMethodsMultStarCount(role, out, methodModifiers, capitalizedSlotName, slotAccessExpression);
-        
-        
+
+
 //         boolean hasAnyChild() {
 //             return (! setOfChild.isEmpty());
 //         }
         // hasAnyXpto
         generateRoleSlotMethodsMultStarHasAnyChild(role, out, methodModifiers, capitalizedSlotName, slotAccessExpression);
-        
-        
+
+
 //         boolean hasChild(SiteElement child) {
 //             return setOfChild.contains(child);
 //         }
@@ -845,13 +850,13 @@ public class CodeGenerator {
             print(out, "collection.set(index2, el1);");
             endMethodBody(out);
         }
-        
-        
-        
+
+
+
         // getXptoSet
         // FIXME: This deals only with the normal case of a Set (without considering ordered or indexed by)
         generateRoleSlotMethodsMultStarSet(role, out, methodModifiers, capitalizedSlotName, slotAccessExpression, slotName, typeName);
-        
+
 //         void addChild(SiteElement child) {
 //             SiteHierarchy.add(this, child);
 //         }
@@ -863,7 +868,7 @@ public class CodeGenerator {
         startMethodBody(out);
         generateRelationAddMethodCall(role, slotName, (isOrdered ? "-1" : null), out);
         endMethodBody(out);
-        
+
         if (isOrdered) {
             //         void addChild(SiteElement child, int index) {
             //             SiteHierarchy.add(this, index, child);
@@ -877,7 +882,7 @@ public class CodeGenerator {
             endMethodBody(out);
         }
 
-        
+
 //         void removeChild(SiteElement child) {
 //             SiteHierarchy.remove(this, child);
 //         }
@@ -1014,7 +1019,7 @@ public class CodeGenerator {
 
         if (argTypes.length > 0) {
             buf.append("<");
-            
+
             String sep = "";
             for (String argType : argTypes) {
                 buf.append(sep);
@@ -1126,15 +1131,15 @@ public class CodeGenerator {
     private int indent = 0;
     private boolean onNewline = true;
     private boolean afterSpace = true;
-    
+
     private void indentMore() {
         indent += 4;
     }
-    
+
     private void indentLess() {
         indent -= 4;
     }
-    
+
     protected void newline(PrintWriter out) {
         out.println();
         for (int i = 0; i < indent; i++) {
@@ -1142,5 +1147,5 @@ public class CodeGenerator {
         }
         onNewline = true;
         afterSpace = true;
-    }    
+    }
 }

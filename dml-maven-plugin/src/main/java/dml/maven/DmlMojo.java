@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * Generate base classes from the DML files
  *
  * @goal generate-domain
- * 
+ *
  * @phase generate-sources
  *
  * @requiresDependencyResolution runtime
@@ -35,7 +35,7 @@ public class DmlMojo extends AbstractMojo {
    * @parameter expression="${generate-domain.src}" default-value="${basedir}/src/main/dml"
    */
   private File srcDirectoryFile;
-	
+
   /**
    * File Destination Directory
    * @parameter expression="${generate-domain.dest}" default-value="${basedir}/src/main/java"
@@ -44,7 +44,7 @@ public class DmlMojo extends AbstractMojo {
 
   /**
    * Base File Destination Directory
-   * @parameter expression="${generate-domain.destBase}" default-value="${project.build.directory}/generated-sources"
+   * @parameter expression="${generate-domain.destBase}" default-value="${project.build.directory}/generated-sources/dml-maven-plugin"
    */
   private File destDirectoryBaseFile;
 
@@ -79,25 +79,28 @@ public class DmlMojo extends AbstractMojo {
   private boolean verbose;
 
   public void execute() throws MojoExecutionException {
-		
+
     CompilerArgs compArgs = null;
     List<String> domainSpecFileNames = new ArrayList<String>();
     long latestBuildTime = destDirectoryBaseFile.lastModified();
 
     DirectoryScanner scanner = new DirectoryScanner();
     scanner.setBasedir(this.srcDirectoryFile);
-    
+
     String[] includes = {"**\\*.dml"};
     scanner.setIncludes(includes);
     scanner.scan();
-    
+
     boolean shouldCompile = false;
 
     Resource resource = new Resource();
     resource.setDirectory(this.srcDirectoryFile.getAbsolutePath());
     resource.addInclude("*.dml");
     mavenProject.addResource(resource);
-    
+
+    List<String> dmlFileList =  DmlMojoUtils.readDmlFilePathsFromArtifact(mavenProject.getArtifacts());
+    domainSpecFileNames.addAll(dmlFileList);
+
     String[] includedFiles = scanner.getIncludedFiles();
     for (String includedFile : includedFiles) {
       String filePath = this.srcDirectoryFile.getAbsolutePath() + "/" + includedFile;
@@ -121,7 +124,7 @@ public class DmlMojo extends AbstractMojo {
              getLog().info("Using model: " + getDomainModelClass().getName());
              getLog().info("Using generator: " + getCodeGeneratorClass().getName());
            }
-           
+
            compArgs = new CompilerArgs(this.destDirectoryFile, this.destDirectoryBaseFile, this.packageName, this.generateFinals, getCodeGeneratorClass(), getDomainModelClass(), domainSpecFileNames);
 
            DomainModel model = DmlCompiler.getDomainModel(compArgs);

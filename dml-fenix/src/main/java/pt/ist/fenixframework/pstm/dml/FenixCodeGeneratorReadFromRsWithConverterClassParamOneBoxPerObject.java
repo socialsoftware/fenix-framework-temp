@@ -16,10 +16,13 @@ public class FenixCodeGeneratorReadFromRsWithConverterClassParamOneBoxPerObject 
 
     public FenixCodeGeneratorReadFromRsWithConverterClassParamOneBoxPerObject(final CompilerArgs compilerArgs, final DomainModel domainModel) {
 	super(compilerArgs, domainModel);
+    packageMapper.put(compilerArgs.getPackageName(), compilerArgs.getDestDirectory());
 	InputStream inputStream;
 	try {
 	    inputStream = getClass().getResourceAsStream("/.dmlProjectPackageMapper");
-	    final String contents = read(new InputStreamReader(inputStream));
+        if(inputStream == null)
+            return;
+        final String contents = read(new InputStreamReader(inputStream));
 	    for (final String line : contents.split("\n")) {
 		final int sindex = line.indexOf(' ');
 		final String packageName = line.substring(0, sindex);
@@ -52,13 +55,16 @@ public class FenixCodeGeneratorReadFromRsWithConverterClassParamOneBoxPerObject 
     @Override
     protected File getDirectoryFor(String packageName) {
 	final File dir = getPackageDir(packageName);
-	return dir == null ? super.getDirectoryFor(packageName) : dir;
+	return dir;
     }
 
     private File getPackageDir(final String packageName) {
 	final File file = packageMapper.get(packageName);
 	if (file == null) {
 	    final int i = packageName.lastIndexOf('.');
+        if(i < 0) {
+            return null;
+        }
 	    final String parentPackageName = packageName.substring(0, i);
 	    final File dir = getPackageDir(parentPackageName);
 	    return dir == null ? null : new File(dir.getAbsolutePath() + File.separator + packageName.substring(i + 1));
